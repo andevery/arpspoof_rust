@@ -2,11 +2,10 @@ extern crate pnet;
 
 use pnet::datalink::{self, NetworkInterface};
 use pnet::datalink::Channel::Ethernet;
-use pnet::packet::{Packet, PacketSize};
+use pnet::packet::{Packet, MutablePacket};
 use pnet::packet::ethernet::{MutableEthernetPacket, EtherTypes};
-use pnet::packet::arp::{MutableArpPacket, ArpPacket, ArpHardwareTypes, ArpOperations};
+use pnet::packet::arp::{MutableArpPacket, ArpHardwareTypes, ArpOperations};
 use pnet::util::MacAddr;
-use std::io;
 use std::env;
 use std::net::Ipv4Addr;
 use std::thread;
@@ -43,19 +42,17 @@ fn main() {
 
     let mut buf = [0u8; 42];
     let packet = build_packet(&iface.mac_address(), &gateway, &mut buf[..]);
-    let packet = ArpPacket::new(packet.payload());
 
-    let (mut tx, mut rx) = match datalink::channel(&iface, Default::default()) {
+    let (mut tx, _) = match datalink::channel(&iface, Default::default()) {
         Ok(Ethernet(tx, rx)) => (tx, rx),
         Ok(_) => panic!("{}: unhandled chanel type", program),
         Err(e) => panic!("{}: unable to create channel: {}", program, e),
     };
 
-    let mut iter = rx.iter();
     loop {
         tx.build_and_send(1, packet.packet().len(),
             &mut |mut new_packet| {
-                new_packet.clone_from(packet);
+                new_packet.clone_from(&packet);
             });
 
         thread::sleep(time::Duration::from_millis(3000));
