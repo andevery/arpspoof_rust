@@ -50,12 +50,12 @@ fn main() {
     };
 
     loop {
-        tx.build_and_send(1, packet.packet().len(),
+        tx.build_and_send(3, packet.packet().len(),
             &mut |mut new_packet| {
                 new_packet.clone_from(&packet);
             });
 
-        thread::sleep(time::Duration::from_millis(3000));
+        thread::sleep(time::Duration::from_millis(1000));
     }
 }
 
@@ -74,7 +74,7 @@ fn build_packet<'a>(mac: &MacAddr, ip: &Ipv4Addr, buf: &'a mut [u8]) -> MutableE
 fn build_arp_packet<'a>(mac: &MacAddr, ip: &Ipv4Addr, buf: &'a mut [u8] ) -> MutableArpPacket<'a> {
     let mut packet = MutableArpPacket::new(buf).unwrap();
     packet.set_hardware_type(ArpHardwareTypes::Ethernet);
-    packet.set_protocol_type(EtherTypes::Arp);
+    packet.set_protocol_type(EtherTypes::Ipv4);
     packet.set_hw_addr_len(6);
     packet.set_proto_addr_len(4);
     packet.set_operation(ArpOperations::Reply);
